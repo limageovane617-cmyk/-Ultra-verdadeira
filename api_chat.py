@@ -7,7 +7,7 @@ from typing import List, Optional
 
 import requests
 from fastapi import FastAPI, HTTPException, Header
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from google import genai
@@ -374,6 +374,14 @@ def criar_url_video(caminho_video):
 # ============================================================
 # ROTAS BASICAS
 # ============================================================
+
+@app.get("/app", response_class=HTMLResponse)
+def interface_web():
+    arquivo = Path(__file__).resolve().parent / "web" / "index.html"
+    if not arquivo.is_file():
+        raise HTTPException(status_code=404, detail="Interface web nao encontrada.")
+    return HTMLResponse(arquivo.read_text(encoding="utf-8"))
+
 
 @app.get("/")
 def inicio():
