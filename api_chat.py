@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from google import genai
 
 from gerenciador_imagem import gerar_imagem_zimage
+from kaggle_bridge import generate_on_kaggle
 
 from gerenciador_video import (
     gerar_video,
@@ -40,6 +41,9 @@ from gemini_bridge import criar_gemini_bridge
 app = FastAPI(
     title="Alex IA Ultra API"
 )
+
+from kaggle_bridge import router as kaggle_bridge_router
+app.include_router(kaggle_bridge_router)
 
 
 # ============================================================
@@ -734,34 +738,24 @@ def ultra_chat(
 @app.post("/api/imagem")
 def imagem(pedido: PedidoImagem):
     try:
-        caminho = gerar_imagem_zimage(pedido.prompt)
-        arquivo = Path(caminho)
-
-        if not arquivo.is_file() or arquivo.stat().st_size == 0:
-            raise RuntimeError("O gerador não retornou um arquivo de imagem válido.")
-
-        url_imagem = criar_url_imagem(caminho)
-
+        imagem_bytes = generate_on_kaggle(pedido.prompt, timeout=900)
+        nome = f"alex_kaggle_{os.urandom(8).hex()}.png"
+        arquivo = PASTA_IMAGENS / nome
+        arquivo.write_bytes(imagem_bytes)
+        with Image.open(arquivo) as validacao:
+            validacao.verify()
+        url_imagem = criar_url_imagem(arquivo)
         return {
-            "success": True,
-            "imagem": url_imagem,
-            "imagem_url": url_imagem,
-            "arquivo_imagem": arquivo.name,
-            "prompt": pedido.prompt,
-            "motor": "Z-Image Turbo / Hugging Face",
+            "success": True, "imagem": url_imagem, "imagem_url": url_imagem,
+            "arquivo_imagem": arquivo.name, "prompt": pedido.prompt,
+            "motor": "Kaggle GPU / Diffusers",
         }
-
     except Exception as erro:
         return {
-            "success": False,
-            "imagem": None,
-            "imagem_url": None,
-            "error": str(erro),
-            "motor": "Z-Image Turbo / Hugging Face",
+            "success": False, "imagem": None, "imagem_url": None,
+            "error": str(erro), "motor": "Kaggle GPU / Diffusers",
         }
 
-
-# ============================================================
 # VIDEO — GERENCIADOR DE VIDEO
 # ============================================================
 
