@@ -42,6 +42,9 @@ app = FastAPI(
     title="Alex IA Ultra API"
 )
 
+from kaggle_bridge import router as kaggle_bridge_router
+app.include_router(kaggle_bridge_router)
+
 
 # ============================================================
 # ULTRA CORE
