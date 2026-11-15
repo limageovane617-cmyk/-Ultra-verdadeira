@@ -162,9 +162,15 @@ def ultra_ping(
 # CONFIGURACAO DOS ARQUIVOS GERADOS
 # ============================================================
 
+# O gerenciador de imagens e a API precisam compartilhar exatamente
+# o mesmo diretório; caso contrário, a geração funciona, mas o GET
+# /api/imagens/{filename} pode responder 404.
 PASTA_IMAGENS = Path(
-    "/tmp/alex_ia_ultra_imagens"
-)
+    os.environ.setdefault(
+        "ALEX_IMAGE_OUTPUT_DIR",
+        "/tmp/alex_ia_ultra_imagens",
+    )
+).expanduser()
 
 PASTA_VIDEOS = Path(
     "/tmp/alex_ia_ultra_videos"
